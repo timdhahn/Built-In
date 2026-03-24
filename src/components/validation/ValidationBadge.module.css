@@ -1,0 +1,23 @@
+.badge {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.errors {
+  background: var(--color-error);
+  color: white;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.warnings {
+  background: var(--color-warning);
+  color: white;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+}

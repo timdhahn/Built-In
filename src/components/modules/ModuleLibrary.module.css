@@ -1,0 +1,19 @@
+.library {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.heading {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}

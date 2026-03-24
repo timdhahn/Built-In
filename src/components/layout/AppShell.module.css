@@ -1,0 +1,34 @@
+.shell {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.canvas {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}

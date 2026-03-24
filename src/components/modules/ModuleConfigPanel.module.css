@@ -1,0 +1,37 @@
+.panel {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.heading {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+  margin-bottom: 12px;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 8px;
+}
+
+.removeBtn {
+  margin-top: 12px;
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--color-error);
+  color: var(--color-error);
+  width: 100%;
+}
+
+.removeBtn:hover {
+  background: rgba(239, 68, 68, 0.05);
+}

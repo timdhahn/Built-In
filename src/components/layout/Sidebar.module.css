@@ -1,0 +1,13 @@
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+}

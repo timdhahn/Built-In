@@ -1,0 +1,96 @@
+[
+  {
+    "id": "single-hang-standard",
+    "type": "single-hang",
+    "label": "Single Hang",
+    "icon": "shirt",
+    "description": "Single rod for long garments (coats, dresses)",
+    "defaultHeight": 1500,
+    "defaultDepth": 560,
+    "minWidth": 400,
+    "maxWidth": 1200,
+    "minHeight": 1000,
+    "maxHeight": 2000,
+    "components": [
+      { "name": "hanging-rod", "material": "chrome-rod", "quantity": 1 },
+      { "name": "rod-support", "material": "steel-bracket", "quantity": 2 },
+      { "name": "shelf-above", "material": "melamine-white-19", "quantity": 1 }
+    ],
+    "tags": ["hanging", "long-garments"]
+  },
+  {
+    "id": "double-hang-standard",
+    "type": "double-hang",
+    "label": "Double Hang",
+    "icon": "layers",
+    "description": "Two rods for shorter garments (shirts, jackets)",
+    "defaultHeight": 2000,
+    "defaultDepth": 560,
+    "minWidth": 400,
+    "maxWidth": 1200,
+    "minHeight": 1600,
+    "maxHeight": 2400,
+    "components": [
+      { "name": "upper-rod", "material": "chrome-rod", "quantity": 1 },
+      { "name": "lower-rod", "material": "chrome-rod", "quantity": 1 },
+      { "name": "rod-support", "material": "steel-bracket", "quantity": 4 },
+      { "name": "shelf-above", "material": "melamine-white-19", "quantity": 1 }
+    ],
+    "tags": ["hanging", "short-garments"]
+  },
+  {
+    "id": "drawer-stack-3",
+    "type": "drawer-stack",
+    "label": "3-Drawer Stack",
+    "icon": "archive",
+    "description": "Three drawers for folded items",
+    "defaultHeight": 600,
+    "defaultDepth": 500,
+    "minWidth": 300,
+    "maxWidth": 900,
+    "minHeight": 450,
+    "maxHeight": 800,
+    "components": [
+      { "name": "drawer-box", "material": "melamine-white-16", "quantity": 3 },
+      { "name": "drawer-face", "material": "melamine-white-19", "quantity": 3 },
+      { "name": "drawer-slide", "material": "drawer-slide", "quantity": 6 }
+    ],
+    "tags": ["drawers", "folded-items"]
+  },
+  {
+    "id": "shelf-tower-5",
+    "type": "shelf-tower",
+    "label": "5-Shelf Tower",
+    "icon": "grid",
+    "description": "Five adjustable shelves for folded items and accessories",
+    "defaultHeight": 1800,
+    "defaultDepth": 400,
+    "minWidth": 300,
+    "maxWidth": 900,
+    "minHeight": 1200,
+    "maxHeight": 2400,
+    "components": [
+      { "name": "shelf", "material": "melamine-white-19", "quantity": 5 },
+      { "name": "shelf-pin", "material": "steel-bracket", "quantity": 20 }
+    ],
+    "tags": ["shelves", "folded-items", "accessories"]
+  },
+  {
+    "id": "shoe-section-standard",
+    "type": "shoe-section",
+    "label": "Shoe Shelf",
+    "icon": "footprints",
+    "description": "Angled shelves for shoe storage",
+    "defaultHeight": 800,
+    "defaultDepth": 350,
+    "minWidth": 400,
+    "maxWidth": 900,
+    "minHeight": 500,
+    "maxHeight": 1200,
+    "components": [
+      { "name": "angled-shelf", "material": "melamine-white-16", "quantity": 4 },
+      { "name": "shelf-fence", "material": "steel-bracket", "quantity": 4 }
+    ],
+    "tags": ["shoes", "angled"]
+  }
+]

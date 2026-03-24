@@ -1,0 +1,64 @@
+.panel {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.heading {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  margin-bottom: 12px;
+}
+
+.ok {
+  font-size: 12px;
+  color: var(--color-success);
+}
+
+.section {
+  margin-bottom: 12px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.errorDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-error);
+  display: inline-block;
+}
+
+.warningDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-warning);
+  display: inline-block;
+}
+
+.issue {
+  padding: 6px 8px;
+  background: #f8fafc;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.message {
+  font-size: 12px;
+}
+
+.suggestion {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
