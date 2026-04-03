@@ -1,12 +1,14 @@
 import { useAppStore } from '@/store';
 import { mmToScene } from './helpers';
 import React from 'react';
+import { PanelMaterial } from './PanelMaterial';
 
 const DIVIDER_THICKNESS = 0.019;
 
 export const BayMesh = React.memo(function BayMesh() {
   const bays = useAppStore((s) => s.bays);
   const envelope = useAppStore((s) => s.envelope);
+  const finishId = useAppStore((s) => s.finishId);
   const h = mmToScene(envelope.height as number);
   const d = mmToScene(envelope.depth as number);
 
@@ -16,9 +18,9 @@ export const BayMesh = React.memo(function BayMesh() {
   for (let i = 0; i < bays.length - 1; i++) {
     xAccum += mmToScene(bays[i].width as number);
     dividers.push(
-      <mesh key={i} position={[xAccum, h / 2, 0]}>
+      <mesh key={i} position={[xAccum, h / 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[DIVIDER_THICKNESS, h, d]} />
-        <meshStandardMaterial color="#94a3b8" transparent opacity={0.6} />
+        <PanelMaterial finishId={finishId} width={d} height={h} />
       </mesh>,
     );
   }

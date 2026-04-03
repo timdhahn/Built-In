@@ -1,6 +1,7 @@
 import { useAppStore } from '@/store';
 import { mm, Mm } from '@/domain/units/types';
 import { WallType } from '@/domain/model/project';
+import { FINISHES } from '@/views/three/finishes';
 import { DimensionInput } from '../shared/DimensionInput';
 import styles from './SpaceConfigPanel.module.css';
 
@@ -15,6 +16,8 @@ const WALL_TYPES: Array<{ value: WallType; label: string }> = [
 export function SpaceConfigPanel() {
   const envelope = useAppStore((s) => s.envelope);
   const setEnvelope = useAppStore((s) => s.setEnvelope);
+  const finishId = useAppStore((s) => s.finishId);
+  const setFinish = useAppStore((s) => s.setFinish);
 
   return (
     <div className={styles.panel}>
@@ -24,11 +27,28 @@ export function SpaceConfigPanel() {
         <label className={styles.label}>Type</label>
         <select
           className={styles.select}
+          aria-label="Wall type"
           value={envelope.wallType}
           onChange={(e) => setEnvelope({ wallType: e.target.value as WallType })}
         >
           {WALL_TYPES.map(({ value, label }) => (
             <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.label}>Finish</label>
+        <select
+          className={styles.select}
+          aria-label="Closet finish"
+          value={finishId}
+          onChange={(e) => setFinish(e.target.value)}
+        >
+          {FINISHES.map(({ id, label }) => (
+            <option key={id} value={id}>
               {label}
             </option>
           ))}

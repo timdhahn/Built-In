@@ -4,6 +4,7 @@ import { useAppStore } from '@/store';
 export function useAutoSave(onSave: () => Promise<void>, delayMs: number = 30000) {
   const envelope = useAppStore((s) => s.envelope);
   const bays = useAppStore((s) => s.bays);
+  const finishId = useAppStore((s) => s.finishId);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
@@ -18,5 +19,5 @@ export function useAutoSave(onSave: () => Promise<void>, delayMs: number = 30000
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [envelope, bays, onSave, delayMs]);
+  }, [envelope, bays, finishId, onSave, delayMs]);
 }

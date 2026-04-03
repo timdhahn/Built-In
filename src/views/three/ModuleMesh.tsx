@@ -25,7 +25,7 @@ export const ModuleMesh = React.memo(function ModuleMesh({ module: mod, bayX }: 
 
   return (
     <group position={[x + w / 2, y + h / 2, 0]}>
-      <mesh>
+      <mesh castShadow receiveShadow>
         <boxGeometry args={[w * 0.95, h * 0.95, d * 0.9]} />
         <meshStandardMaterial color={color} transparent opacity={0.7} />
       </mesh>
@@ -38,16 +38,16 @@ export const ModuleMesh = React.memo(function ModuleMesh({ module: mod, bayX }: 
 
       {/* Type-specific details */}
       {(mod.type === 'single-hang' || mod.type === 'double-hang') && (
-        <mesh position={[0, h * 0.35, 0]}>
+        <mesh position={[0, h * 0.35, 0]} castShadow>
           <cylinderGeometry args={[0.005, 0.005, w * 0.9, 8]} />
-          <meshStandardMaterial color="#9ca3af" />
+          <meshPhysicalMaterial color="#bfc7cf" roughness={0.22} metalness={0.9} />
         </mesh>
       )}
 
       {mod.type === 'double-hang' && (
-        <mesh position={[0, -h * 0.1, 0]}>
+        <mesh position={[0, -h * 0.1, 0]} castShadow>
           <cylinderGeometry args={[0.005, 0.005, w * 0.9, 8]} />
-          <meshStandardMaterial color="#9ca3af" />
+          <meshPhysicalMaterial color="#bfc7cf" roughness={0.22} metalness={0.9} />
         </mesh>
       )}
     </group>
