@@ -1,7 +1,8 @@
-import { Suspense, lazy, useState } from 'react';
+import { Suspense, lazy, useState, useRef } from 'react';
 import {
   DndContext,
   DragEndEvent,
+  DragOverEvent,
   DragStartEvent,
   PointerSensor,
   useSensor,
@@ -51,8 +52,10 @@ export function AppShell() {
   const placeModule = useAppStore((s) => s.placeModule);
   const reorderModules = useAppStore((s) => s.reorderModules);
   const moveModuleToIndex = useAppStore((s) => s.moveModuleToIndex);
+  const setDragInsertion = useAppStore((s) => s.setDragInsertion);
 
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
+  const insertionRef = useRef<{ bayId: string; targetIndex: number } | null>(null);
 
   useValidation();
   useKeyboardShortcuts();
@@ -78,8 +81,60 @@ export function AppShell() {
     }
   };
 
+  const computeInsertion = (
+    activeId: string,
+    over: DragOverEvent['over'],
+    activeTranslatedRect: DragEndEvent['active']['rect']['current']['translated'],
+  ) => {
+    if (!over) return null;
+    const overData = over.data.current as Record<string, unknown> | undefined;
+    const overId = String(over.id);
+
+    if (overData?.type === 'placed-module') {
+      const overModuleId = overData.moduleId as string;
+      if (overModuleId === activeId) return null;
+      const targetBay = bays.find((b) => b.modules.some((m) => m.id === overModuleId));
+      if (!targetBay) return null;
+      const sorted = [...targetBay.modules].sort((a, b) => (a.y as number) - (b.y as number));
+      const overIndex = sorted.findIndex((m) => m.id === overModuleId);
+      // Compare vertical centers: smaller CSS Y = higher on screen = higher in closet
+      let targetIndex = overIndex;
+      if (activeTranslatedRect) {
+        const activeCenterY = activeTranslatedRect.top + activeTranslatedRect.height / 2;
+        const overCenterY = over.rect.top + over.rect.height / 2;
+        if (activeCenterY < overCenterY) targetIndex = overIndex + 1; // insert above
+      }
+      return { bayId: targetBay.id, targetIndex };
+    }
+
+    if (overId.startsWith('bay:') || overId.startsWith('canvas-bay:')) {
+      const bayId = overId.replace(/^(canvas-)?bay:/, '');
+      const targetBay = bays.find((b) => b.id === bayId);
+      if (!targetBay) return null;
+      return { bayId, targetIndex: targetBay.modules.length };
+    }
+
+    return null;
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const activeData = event.active.data.current as Record<string, unknown> | undefined;
+    if (activeData?.type !== 'placed-module') return;
+    const insertion = computeInsertion(
+      activeData.moduleId as string,
+      event.over,
+      event.active.rect.current.translated,
+    );
+    insertionRef.current = insertion;
+    setDragInsertion(insertion);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
+    const insertion = insertionRef.current;
+    insertionRef.current = null;
+    setDragInsertion(null);
     setActiveDrag(null);
+
     const { active, over } = event;
     if (!over) return;
 
@@ -100,9 +155,7 @@ export function AppShell() {
         targetBayId = bay?.id as BayId | undefined;
       }
 
-      if (targetBayId) {
-        placeModule(targetBayId, definition);
-      }
+      if (targetBayId) placeModule(targetBayId, definition);
       return;
     }
 
@@ -112,24 +165,15 @@ export function AppShell() {
       const activeBay = bays.find((b) => b.modules.some((m) => m.id === activeModuleId));
       if (!activeBay) return;
 
-      let targetBayId: BayId;
-      let targetIndex: number;
+      // Use the insertion computed during onDragOver; fall back to computing from the final event
+      const finalInsertion =
+        insertion ??
+        computeInsertion(activeModuleId, over, active.rect.current.translated);
 
-      if (overId.startsWith('bay:') || overId.startsWith('canvas-bay:')) {
-        targetBayId = overId.replace(/^(canvas-)?bay:/, '') as BayId;
-        const targetBay = bays.find((b) => b.id === targetBayId);
-        targetIndex = targetBay?.modules.length ?? 0;
-      } else if (overData?.type === 'placed-module') {
-        const overModuleId = overData.moduleId as string;
-        const targetBay = bays.find((b) => b.modules.some((m) => m.id === overModuleId));
-        if (!targetBay) return;
-        targetBayId = targetBay.id as BayId;
-        const sorted = [...targetBay.modules].sort((a, b) => (a.y as number) - (b.y as number));
-        targetIndex = sorted.findIndex((m) => m.id === overModuleId);
-        if (targetIndex === -1) targetIndex = sorted.length;
-      } else {
-        return;
-      }
+      if (!finalInsertion) return;
+
+      const { bayId: targetBayIdStr, targetIndex } = finalInsertion;
+      const targetBayId = targetBayIdStr as BayId;
 
       if (activeBay.id === targetBayId) {
         const sorted = [...activeBay.modules].sort((a, b) => (a.y as number) - (b.y as number));
@@ -148,8 +192,13 @@ export function AppShell() {
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
-      onDragCancel={() => setActiveDrag(null)}
+      onDragCancel={() => {
+        insertionRef.current = null;
+        setDragInsertion(null);
+        setActiveDrag(null);
+      }}
     >
       <div className={styles.shell}>
         <Toolbar />

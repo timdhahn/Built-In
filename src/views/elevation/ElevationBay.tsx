@@ -12,8 +12,24 @@ interface ElevationBayProps {
 export function ElevationBay({ bay, x, envelopeHeight }: ElevationBayProps) {
   const selectedBayId = useAppStore((s) => s.selectedBayId);
   const selectBay = useAppStore((s) => s.selectBay);
+  const dragInsertion = useAppStore((s) => s.dragInsertion);
   const isSelected = selectedBayId === bay.id;
   const w = bay.width as number;
+
+  // Compute insertion line Y position in SVG space
+  let insertionLineY: number | null = null;
+  if (dragInsertion?.bayId === bay.id) {
+    const sorted = [...bay.modules].sort((a, b) => (a.y as number) - (b.y as number));
+    const { targetIndex } = dragInsertion;
+    if (sorted.length === 0) {
+      insertionLineY = envelopeHeight;
+    } else if (targetIndex < sorted.length) {
+      insertionLineY = envelopeHeight - (sorted[targetIndex].y as number);
+    } else {
+      const top = sorted[sorted.length - 1];
+      insertionLineY = envelopeHeight - (top.y as number) - (top.height as number);
+    }
+  }
 
   const { setNodeRef, isOver } = useDroppable({
     id: `canvas-bay:${bay.id}`,
@@ -63,6 +79,22 @@ export function ElevationBay({ bay, x, envelopeHeight }: ElevationBayProps) {
           envelopeHeight={envelopeHeight}
         />
       ))}
+
+      {/* Drag insertion indicator */}
+      {insertionLineY !== null && (
+        <g style={{ pointerEvents: 'none' }}>
+          <line
+            x1={x + 6}
+            y1={insertionLineY}
+            x2={x + w - 6}
+            y2={insertionLineY}
+            stroke="#4f46e5"
+            strokeWidth={3}
+            strokeLinecap="round"
+          />
+          <circle cx={x + 6} cy={insertionLineY} r={5} fill="#4f46e5" />
+        </g>
+      )}
     </g>
   );
 }

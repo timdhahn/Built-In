@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { useDraggable } from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useAppStore } from '@/store';
 import { Module, ModuleId } from '@/domain/model';
 import { mm } from '@/domain/units/types';
@@ -36,7 +36,12 @@ export function ElevationModule({ module: mod, bayX, envelopeHeight }: Elevation
 
   const bodyRef = useRef<SVGRectElement>(null);
 
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
+    id: `canvas-module:${mod.id}`,
+    data: { type: 'placed-module', moduleId: mod.id },
+  });
+
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
     id: `canvas-module:${mod.id}`,
     data: { type: 'placed-module', moduleId: mod.id },
   });
@@ -62,7 +67,9 @@ export function ElevationModule({ module: mod, bayX, envelopeHeight }: Elevation
   ) => {
     e.stopPropagation(); // prevent drag from starting
     e.preventDefault();
-    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+
+    const target = e.currentTarget as Element;
+    target.setPointerCapture(e.pointerId);
 
     const scale = getScale();
     const startY = e.clientY;
@@ -89,8 +96,8 @@ export function ElevationModule({ module: mod, bayX, envelopeHeight }: Elevation
       }
     };
 
-    const onUp = (ue: PointerEvent) => {
-      (e.currentTarget as Element).releasePointerCapture(ue.pointerId);
+    const onUp = () => {
+      target.releasePointerCapture(e.pointerId);
       document.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerup', onUp);
     };
@@ -102,7 +109,9 @@ export function ElevationModule({ module: mod, bayX, envelopeHeight }: Elevation
   return (
     <g
       ref={(el) => {
-        setNodeRef(el as unknown as HTMLElement);
+        const h = el as unknown as HTMLElement;
+        setDragRef(h);
+        setDropRef(h);
       }}
       style={{ opacity: isDragging ? 0.25 : 1, cursor: isDragging ? 'grabbing' : 'grab' }}
       {...attributes}
@@ -116,9 +125,9 @@ export function ElevationModule({ module: mod, bayX, envelopeHeight }: Elevation
         width={w - 4}
         height={h - 4}
         rx={3}
-        fill={fill}
-        stroke={isSelected ? '#4f46e5' : stroke}
-        strokeWidth={isSelected ? 3 : 2}
+        fill={isOver ? 'rgba(79,70,229,0.18)' : fill}
+        stroke={isSelected ? '#4f46e5' : isOver ? '#4f46e5' : stroke}
+        strokeWidth={isSelected ? 3 : isOver ? 2 : 2}
         onClick={(e) => {
           e.stopPropagation();
           selectModule(mod.id as ModuleId);
