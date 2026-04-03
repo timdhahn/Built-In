@@ -1,14 +1,15 @@
-import { Suspense, lazy, useState, useRef } from 'react';
+import { Suspense, lazy, useRef, useState } from 'react';
 import {
   DndContext,
   DragEndEvent,
   DragOverEvent,
-  DragStartEvent,
+  type DragStartEvent,
   PointerSensor,
   useSensor,
   useSensors,
   closestCenter,
   DragOverlay,
+  type Modifier,
 } from '@dnd-kit/core';
 import { useAppStore } from '@/store';
 import { useValidation } from '@/hooks/useValidation';
@@ -46,6 +47,20 @@ type ActiveDrag =
   | { type: 'library-card'; definition: ModuleDefinition }
   | { type: 'placed-module'; moduleId: string; moduleType: string };
 
+const pointerAlignedOverlay: Modifier = ({ activatorEvent, active, activeNodeRect, transform }) => {
+  if (active?.data.current?.type !== 'placed-module') return transform;
+  if (!(activatorEvent instanceof MouseEvent || activatorEvent instanceof PointerEvent)) {
+    return transform;
+  }
+  if (!activeNodeRect) return transform;
+
+  return {
+    ...transform,
+    x: transform.x + (activatorEvent.clientX - activeNodeRect.left),
+    y: transform.y + (activatorEvent.clientY - activeNodeRect.top),
+  };
+};
+
 export function AppShell() {
   const viewMode = useAppStore((s) => s.viewMode);
   const bays = useAppStore((s) => s.bays);
@@ -55,6 +70,7 @@ export function AppShell() {
   const setDragInsertion = useAppStore((s) => s.setDragInsertion);
 
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
+  const [disableDropAnimation, setDisableDropAnimation] = useState(false);
   const insertionRef = useRef<{ bayId: string; targetIndex: number } | null>(null);
 
   useValidation();
@@ -65,6 +81,7 @@ export function AppShell() {
   );
 
   const handleDragStart = (event: DragStartEvent) => {
+    setDisableDropAnimation(false);
     const data = event.active.data.current as Record<string, unknown> | undefined;
     if (!data) return;
 
@@ -133,10 +150,13 @@ export function AppShell() {
     const insertion = insertionRef.current;
     insertionRef.current = null;
     setDragInsertion(null);
-    setActiveDrag(null);
 
     const { active, over } = event;
-    if (!over) return;
+    if (!over) {
+      setDisableDropAnimation(false);
+      setActiveDrag(null);
+      return;
+    }
 
     const activeData = active.data.current as Record<string, unknown> | undefined;
     const overData = over.data.current as Record<string, unknown> | undefined;
@@ -155,6 +175,8 @@ export function AppShell() {
         targetBayId = bay?.id as BayId | undefined;
       }
 
+      setDisableDropAnimation(Boolean(targetBayId));
+      setActiveDrag(null);
       if (targetBayId) placeModule(targetBayId, definition);
       return;
     }
@@ -163,17 +185,27 @@ export function AppShell() {
     if (activeData?.type === 'placed-module') {
       const activeModuleId = activeData.moduleId as ModuleId;
       const activeBay = bays.find((b) => b.modules.some((m) => m.id === activeModuleId));
-      if (!activeBay) return;
+      if (!activeBay) {
+        setDisableDropAnimation(false);
+        setActiveDrag(null);
+        return;
+      }
 
       // Use the insertion computed during onDragOver; fall back to computing from the final event
       const finalInsertion =
         insertion ??
         computeInsertion(activeModuleId, over, active.rect.current.translated);
 
-      if (!finalInsertion) return;
+      if (!finalInsertion) {
+        setDisableDropAnimation(false);
+        setActiveDrag(null);
+        return;
+      }
 
       const { bayId: targetBayIdStr, targetIndex } = finalInsertion;
       const targetBayId = targetBayIdStr as BayId;
+      setDisableDropAnimation(true);
+      setActiveDrag(null);
 
       if (activeBay.id === targetBayId) {
         const sorted = [...activeBay.modules].sort((a, b) => (a.y as number) - (b.y as number));
@@ -184,7 +216,11 @@ export function AppShell() {
       } else {
         moveModuleToIndex(activeModuleId, activeBay.id as BayId, targetBayId, targetIndex);
       }
+      return;
     }
+
+    setDisableDropAnimation(false);
+    setActiveDrag(null);
   };
 
   return (
@@ -197,6 +233,7 @@ export function AppShell() {
       onDragCancel={() => {
         insertionRef.current = null;
         setDragInsertion(null);
+        setDisableDropAnimation(false);
         setActiveDrag(null);
       }}
     >
@@ -221,7 +258,10 @@ export function AppShell() {
         <ToastContainer />
       </div>
 
-      <DragOverlay>
+      <DragOverlay
+        dropAnimation={disableDropAnimation ? null : undefined}
+        modifiers={[pointerAlignedOverlay]}
+      >
         {activeDrag?.type === 'library-card' && (
           <div className={overlayStyles.cardOverlay}>
             <span className={overlayStyles.icon}>
