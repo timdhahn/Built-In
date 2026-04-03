@@ -12,6 +12,7 @@ export function Scene() {
 
   const w = mmToScene(envelope.width as number);
   const h = mmToScene(envelope.height as number);
+  const d = mmToScene(envelope.depth as number);
 
   // Compute bay x positions
   let xAccum = 0;
@@ -44,7 +45,7 @@ export function Scene() {
         )),
       )}
 
-      <CameraControls />
+      <CameraControls width={w} height={h} depth={d} />
       <gridHelper args={[10, 20, '#e2e8f0', '#e2e8f0']} />
     </Canvas>
   );
