@@ -14,6 +14,13 @@ function isWebGpuSupported() {
   return typeof navigator !== 'undefined' && 'gpu' in navigator;
 }
 
+function isWebGpuOptInEnabled() {
+  if (typeof window === 'undefined') return false;
+  const queryEnabled = new URLSearchParams(window.location.search).get('webgpu') === '1';
+  const localEnabled = window.localStorage.getItem('enable-webgpu') === '1';
+  return queryEnabled || localEnabled;
+}
+
 function isHtmlCanvas(canvas: HTMLCanvasElement | OffscreenCanvas): canvas is HTMLCanvasElement {
   return typeof HTMLCanvasElement !== 'undefined' && canvas instanceof HTMLCanvasElement;
 }
@@ -23,7 +30,7 @@ export function Scene() {
   const bays = useAppStore((s) => s.bays);
   const setEffectiveRenderer = useAppStore((s) => s.setEffectiveRenderer);
   const [rendererMode, setRendererMode] = useState<'webgpu' | 'webgl'>(() =>
-    isWebGpuSupported() ? 'webgpu' : 'webgl',
+    isWebGpuSupported() && isWebGpuOptInEnabled() ? 'webgpu' : 'webgl',
   );
   const [webGpuReady, setWebGpuReady] = useState(false);
   const fallbackTriggeredRef = useRef(false);
@@ -48,7 +55,7 @@ export function Scene() {
   }, [rendererMode, setEffectiveRenderer]);
 
   const createRenderer = useCallback((canvas: HTMLCanvasElement | OffscreenCanvas) => {
-    if (rendererMode === 'webgpu' && isWebGpuSupported() && isHtmlCanvas(canvas)) {
+    if (rendererMode === 'webgpu' && isWebGpuSupported() && isWebGpuOptInEnabled() && isHtmlCanvas(canvas)) {
       try {
         const renderer = new WebGPURenderer({
           canvas,
@@ -64,6 +71,7 @@ export function Scene() {
             if (!fallbackTriggeredRef.current) {
               fallbackTriggeredRef.current = true;
               setRendererMode('webgl');
+              setEffectiveRenderer('webgl');
             }
           });
         return renderer as unknown as WebGLRenderer;
@@ -71,6 +79,7 @@ export function Scene() {
         if (!fallbackTriggeredRef.current) {
           fallbackTriggeredRef.current = true;
           setRendererMode('webgl');
+          setEffectiveRenderer('webgl');
         }
       }
     }
