@@ -1,3 +1,4 @@
+import { useDroppable } from '@dnd-kit/core';
 import { useAppStore } from '@/store';
 import { Bay, BayId } from '@/domain/model';
 import { ElevationModule } from './ElevationModule';
@@ -14,18 +15,30 @@ export function ElevationBay({ bay, x, envelopeHeight }: ElevationBayProps) {
   const isSelected = selectedBayId === bay.id;
   const w = bay.width as number;
 
+  const { setNodeRef, isOver } = useDroppable({
+    id: `canvas-bay:${bay.id}`,
+    data: { type: 'canvas-bay', bayId: bay.id },
+  });
+
   return (
     <g>
-      {/* Bay background - click target */}
+      {/* Droppable bay background */}
       <rect
+        ref={setNodeRef as unknown as React.Ref<SVGRectElement>}
         x={x}
         y={0}
         width={w}
         height={envelopeHeight}
-        fill={isSelected ? 'rgba(79, 70, 229, 0.05)' : 'transparent'}
-        stroke={isSelected ? '#4f46e5' : 'transparent'}
-        strokeWidth={isSelected ? 1 : 0}
-        strokeDasharray={isSelected ? '4 2' : undefined}
+        fill={
+          isOver
+            ? 'rgba(79, 70, 229, 0.12)'
+            : isSelected
+            ? 'rgba(79, 70, 229, 0.05)'
+            : 'transparent'
+        }
+        stroke={isOver ? '#4f46e5' : isSelected ? '#4f46e5' : 'transparent'}
+        strokeWidth={isOver ? 2 : isSelected ? 1 : 0}
+        strokeDasharray={isSelected && !isOver ? '4 2' : undefined}
         style={{ cursor: 'pointer' }}
         onClick={() => selectBay(bay.id as BayId)}
       />
@@ -36,9 +49,9 @@ export function ElevationBay({ bay, x, envelopeHeight }: ElevationBayProps) {
         y1={0}
         x2={x + w}
         y2={envelopeHeight}
-        stroke="#cbd5e1"
-        strokeWidth={1}
-        strokeDasharray="4 4"
+        stroke="#94a3b8"
+        strokeWidth={2}
+        strokeDasharray="6 4"
       />
 
       {/* Modules within this bay */}

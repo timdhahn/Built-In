@@ -13,7 +13,7 @@ interface DimensionInputProps {
 }
 
 export function DimensionInput({ value, onChange, min, max, label, disabled }: DimensionInputProps) {
-  const { format, parse } = useDimension();
+  const { format, parse, unit } = useDimension();
   const [text, setText] = useState(() => format(value));
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -28,7 +28,7 @@ export function DimensionInput({ value, onChange, min, max, label, disabled }: D
   const commit = useCallback(() => {
     const parsed = parse(text);
     if (parsed === null) {
-      setError('Invalid dimension');
+      setError('Invalid');
       setText(format(value));
       return;
     }
@@ -45,24 +45,27 @@ export function DimensionInput({ value, onChange, min, max, label, disabled }: D
   return (
     <div className={styles.wrapper}>
       {label && <label className={styles.label}>{label}</label>}
-      <input
-        ref={inputRef}
-        className={`${styles.input} ${error ? styles.error : ''}`}
-        type="text"
-        value={text}
-        disabled={disabled}
-        onChange={(e) => {
-          setText(e.target.value);
-          setError(null);
-        }}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            commit();
-            inputRef.current?.blur();
-          }
-        }}
-      />
+      <div className={`${styles.inputRow} ${error ? styles.inputRowError : ''}`}>
+        <input
+          ref={inputRef}
+          className={styles.input}
+          type="text"
+          value={text}
+          disabled={disabled}
+          onChange={(e) => {
+            setText(e.target.value);
+            setError(null);
+          }}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              commit();
+              inputRef.current?.blur();
+            }
+          }}
+        />
+        {unit && <span className={styles.unitBadge}>{unit}</span>}
+      </div>
       {error && <span className={styles.errorText}>{error}</span>}
     </div>
   );
