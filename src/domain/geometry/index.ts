@@ -7,4 +7,4 @@ export {
   removeBay,
   MIN_BAY_WIDTH,
 } from './layout';
-export { findNextSlot, snapToGrid } from './placement';
+export { findNextSlot, snapToGrid, resizeModuleInBay } from './placement';

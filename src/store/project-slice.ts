@@ -3,7 +3,7 @@ import { Mm, mm } from '@/domain/units/types';
 import { Unit } from '@/domain/units/types';
 import { SpaceEnvelope, Bay, Module, BayId, ModuleId, bayId, moduleId, componentId } from '@/domain/model';
 import { distributeEqualBays, addBay as addBayLayout, removeBay as removeBayLayout, resizeBay as resizeBayLayout } from '@/domain/geometry/layout';
-import { findNextSlot } from '@/domain/geometry/placement';
+import { findNextSlot, resizeModuleInBay } from '@/domain/geometry/placement';
 import { ModuleDefinition } from '@/domain/catalog/types';
 
 export interface ProjectSlice {
@@ -241,9 +241,14 @@ export const createProjectSlice: StateCreator<ProjectSlice, [['zustand/immer', n
   updateModuleDimensions: (modId, patch) =>
     set((state) => {
       for (const bay of state.bays) {
-        const mod = bay.modules.find((m) => m.id === modId);
-        if (mod) {
-          Object.assign(mod, patch);
+        const modExists = bay.modules.some((m) => m.id === modId);
+        if (modExists) {
+          bay.modules = resizeModuleInBay(
+            bay.modules,
+            modId,
+            patch,
+            state.envelope.height,
+          );
           return;
         }
       }
