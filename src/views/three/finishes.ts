@@ -8,6 +8,7 @@ export interface FinishDefinition {
     normalMap: string;
     roughnessMap: string;
   };
+  grainRotation?: number;
   tint: string;
   tileSize: number;
   roughness: number;
@@ -24,6 +25,7 @@ export const FINISHES: FinishDefinition[] = [
       normalMap: '/textures/finishes/white-melamine/normal.jpg',
       roughnessMap: '/textures/finishes/white-melamine/roughness.jpg',
     },
+    grainRotation: 0,
     tint: '#f6f6f3',
     tileSize: 1.4,
     roughness: 0.52,
@@ -38,6 +40,7 @@ export const FINISHES: FinishDefinition[] = [
       normalMap: '/textures/finishes/oak/normal.jpg',
       roughnessMap: '/textures/finishes/oak/roughness.jpg',
     },
+    grainRotation: Math.PI / 2,
     tint: '#f0cda6',
     tileSize: 1.8,
     roughness: 0.66,
@@ -52,6 +55,7 @@ export const FINISHES: FinishDefinition[] = [
       normalMap: '/textures/finishes/walnut/normal.jpg',
       roughnessMap: '/textures/finishes/walnut/roughness.jpg',
     },
+    grainRotation: Math.PI / 2,
     tint: '#7a553b',
     tileSize: 1.5,
     roughness: 0.64,
@@ -66,6 +70,7 @@ export const FINISHES: FinishDefinition[] = [
       normalMap: '/textures/finishes/charcoal/normal.jpg',
       roughnessMap: '/textures/finishes/charcoal/roughness.jpg',
     },
+    grainRotation: Math.PI / 2,
     tint: '#596068',
     tileSize: 1.6,
     roughness: 0.7,

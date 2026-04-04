@@ -16,10 +16,13 @@ function cloneWithRepeat(
   repeatY: number,
   useSrgb: boolean,
   anisotropy: number,
+  rotation: number,
 ): Texture {
   const clone = texture.clone();
   clone.wrapS = RepeatWrapping;
   clone.wrapT = RepeatWrapping;
+  clone.center.set(0.5, 0.5);
+  clone.rotation = rotation;
   clone.repeat.set(repeatX, repeatY);
   clone.anisotropy = anisotropy;
   clone.needsUpdate = true;
@@ -40,22 +43,23 @@ export function PanelMaterial({ finishId, width, height }: PanelMaterialProps) {
 
   const repeatX = Math.max(1, width / finish.tileSize);
   const repeatY = Math.max(1, height / finish.tileSize);
+  const grainRotation = finish.grainRotation ?? 0;
   const getMaxAnisotropy = (gl as unknown as { capabilities?: { getMaxAnisotropy?: () => number } })
     .capabilities
     ?.getMaxAnisotropy;
   const anisotropy = Math.min(8, getMaxAnisotropy?.() ?? 1);
 
   const map = useMemo(
-    () => cloneWithRepeat(mapSource, repeatX, repeatY, true, anisotropy),
-    [mapSource, repeatX, repeatY, anisotropy],
+    () => cloneWithRepeat(mapSource, repeatX, repeatY, true, anisotropy, grainRotation),
+    [mapSource, repeatX, repeatY, anisotropy, grainRotation],
   );
   const normalMap = useMemo(
-    () => cloneWithRepeat(normalMapSource, repeatX, repeatY, false, anisotropy),
-    [normalMapSource, repeatX, repeatY, anisotropy],
+    () => cloneWithRepeat(normalMapSource, repeatX, repeatY, false, anisotropy, grainRotation),
+    [normalMapSource, repeatX, repeatY, anisotropy, grainRotation],
   );
   const roughnessMap = useMemo(
-    () => cloneWithRepeat(roughnessMapSource, repeatX, repeatY, false, anisotropy),
-    [roughnessMapSource, repeatX, repeatY, anisotropy],
+    () => cloneWithRepeat(roughnessMapSource, repeatX, repeatY, false, anisotropy, grainRotation),
+    [roughnessMapSource, repeatX, repeatY, anisotropy, grainRotation],
   );
 
   return (
