@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="charcoalBase" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5a6168" />
+      <stop offset="100%" stop-color="#3f454b" />
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#charcoalBase)" />
+  <path d="M0 34h256M0 110h256M0 188h256" stroke="#2e3337" stroke-width="4" opacity="0.38" />
+  <path d="M42 0v256M132 0v256M214 0v256" stroke="#6a7279" stroke-width="2" opacity="0.2" />
+</svg>

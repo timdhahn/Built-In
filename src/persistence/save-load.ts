@@ -1,5 +1,5 @@
 import { db, StoredProject } from './db';
-import { serialize, deserialize, SerializedProject } from './serialization';
+import { serialize, deserialize, SerializedProject, CURRENT_SCHEMA_VERSION } from './serialization';
 import { AppState } from '@/store/store';
 import { nanoid } from 'nanoid';
 
@@ -11,7 +11,7 @@ export async function saveProject(state: AppState, existingId?: string): Promise
     name: state.projectName,
     createdAt: now,
     updatedAt: now,
-    schemaVersion: 1,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     data: serialize(state),
   };
 

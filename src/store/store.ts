@@ -21,6 +21,7 @@ export const useAppStore = create<AppState>()(
         envelope: state.envelope,
         bays: state.bays,
         projectName: state.projectName,
+        finishId: state.finishId,
       }),
     },
   ),

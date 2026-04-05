@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="walnutBase" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#8a6446" />
+      <stop offset="100%" stop-color="#6f4a32" />
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#walnutBase)" />
+  <path d="M0 18C44 28 88 10 128 20S214 32 256 14" stroke="#4d3223" stroke-width="5" fill="none" opacity="0.5" />
+  <path d="M0 74C40 88 88 62 128 74S214 88 256 70" stroke="#5f3e2a" stroke-width="5" fill="none" opacity="0.5" />
+  <path d="M0 132C42 146 86 120 128 134S212 146 256 128" stroke="#4a2f21" stroke-width="5" fill="none" opacity="0.52" />
+  <path d="M0 196C42 210 88 188 130 198S212 212 256 194" stroke="#3f281b" stroke-width="6" fill="none" opacity="0.55" />
+</svg>
