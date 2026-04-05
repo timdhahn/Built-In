@@ -47,8 +47,8 @@ export function ElevationCanvas() {
           width={w}
           height={h}
           fill="white"
-          stroke="#94a3b8"
-          strokeWidth={2}
+          stroke="#475569"
+          strokeWidth={4}
         />
 
         {/* Bay dividers and modules */}

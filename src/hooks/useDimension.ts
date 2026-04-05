@@ -2,16 +2,18 @@ import { useCallback } from 'react';
 import { Mm } from '@/domain/units/types';
 import { Unit } from '@/domain/units/types';
 import { parseDimension, isParseError } from '@/domain/units/parse';
-import { formatDimension } from '@/domain/units/format';
+import { formatDimension, formatDimensionValue, unitLabel } from '@/domain/units/format';
 import { useAppStore } from '@/store';
 
 export function useDimension() {
   const displayUnit = useAppStore((s) => s.displayUnit);
 
   const format = useCallback(
-    (value: Mm) => formatDimension(value, displayUnit),
+    (value: Mm) => formatDimensionValue(value, displayUnit),
     [displayUnit],
   );
+
+  const unit = unitLabel(displayUnit);
 
   const parse = useCallback(
     (input: string) => {
@@ -22,7 +24,7 @@ export function useDimension() {
     [displayUnit],
   );
 
-  return { format, parse, displayUnit };
+  return { format, parse, displayUnit, unit };
 }
 
 export function useDimensionWithUnit(unit: Unit) {

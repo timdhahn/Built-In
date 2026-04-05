@@ -1,5 +1,8 @@
+import { useRef } from 'react';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useAppStore } from '@/store';
 import { Module, ModuleId } from '@/domain/model';
+import { mm } from '@/domain/units/types';
 
 interface ElevationModuleProps {
   module: Module;
@@ -23,162 +26,197 @@ const MODULE_STROKES: Record<string, string> = {
   'shoe-section': '#ec4899',
 };
 
+const RESIZE_ZONE = 12; // SVG units — height of the invisible resize hit area
+
 export function ElevationModule({ module: mod, bayX, envelopeHeight }: ElevationModuleProps) {
   const selectedModuleId = useAppStore((s) => s.selectedModuleId);
   const selectModule = useAppStore((s) => s.selectModule);
+  const updateModuleDimensions = useAppStore((s) => s.updateModuleDimensions);
   const isSelected = selectedModuleId === mod.id;
 
+  const bodyRef = useRef<SVGRectElement>(null);
+
+  const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
+    id: `canvas-module:${mod.id}`,
+    data: { type: 'placed-module', moduleId: mod.id },
+  });
+
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: `canvas-module:${mod.id}`,
+    data: { type: 'placed-module', moduleId: mod.id },
+  });
+
   const x = bayX + (mod.x as number);
-  const y = envelopeHeight - (mod.y as number) - (mod.height as number); // flip Y
+  const y = envelopeHeight - (mod.y as number) - (mod.height as number);
   const w = mod.width as number;
   const h = mod.height as number;
 
   const fill = MODULE_COLORS[mod.type] ?? '#f1f5f9';
   const stroke = MODULE_STROKES[mod.type] ?? '#94a3b8';
 
+  // Compute CSS-to-SVG scale from the body rect's rendered size
+  const getScale = () => {
+    if (!bodyRef.current) return 1;
+    const cssRect = bodyRef.current.getBoundingClientRect();
+    return cssRect.width / (w - 4);
+  };
+
+  const handleResizeStart = (
+    e: React.PointerEvent<SVGRectElement>,
+    edge: 'top' | 'bottom',
+  ) => {
+    e.stopPropagation(); // prevent drag from starting
+    e.preventDefault();
+
+    const target = e.currentTarget as Element;
+    target.setPointerCapture(e.pointerId);
+
+    const scale = getScale();
+    const startY = e.clientY;
+    const startHeight = mod.height as number;
+    const startModY = mod.y as number;
+
+    const onMove = (me: PointerEvent) => {
+      const deltaYPx = me.clientY - startY;
+      const deltaYMm = deltaYPx / scale;
+
+      if (edge === 'top') {
+        // Top edge: height changes, bottom (mod.y) stays fixed
+        const newH = Math.max(80, Math.round(startHeight - deltaYMm));
+        updateModuleDimensions(mod.id as ModuleId, { height: mm(newH) });
+      } else {
+        // Bottom edge: floor (mod.y) moves, top of module stays fixed
+        const newModY = Math.max(0, Math.round(startModY - deltaYMm));
+        const topFixed = startModY + startHeight;
+        const newH = Math.max(80, topFixed - newModY);
+        updateModuleDimensions(mod.id as ModuleId, {
+          y: mm(newModY),
+          height: mm(Math.round(newH)),
+        });
+      }
+    };
+
+    const onUp = () => {
+      target.releasePointerCapture(e.pointerId);
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+    };
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  };
+
   return (
     <g
-      style={{ cursor: 'pointer' }}
-      onClick={(e) => {
-        e.stopPropagation();
-        selectModule(mod.id as ModuleId);
+      ref={(el) => {
+        const h = el as unknown as HTMLElement;
+        setDragRef(h);
+        setDropRef(h);
       }}
+      style={{ opacity: isDragging ? 0.25 : 1, cursor: isDragging ? 'grabbing' : 'grab' }}
+      {...attributes}
+      {...listeners}
     >
       {/* Module body */}
       <rect
+        ref={bodyRef}
         x={x + 2}
         y={y + 2}
         width={w - 4}
         height={h - 4}
-        rx={2}
-        fill={fill}
-        stroke={isSelected ? '#4f46e5' : stroke}
-        strokeWidth={isSelected ? 2 : 1}
+        rx={3}
+        fill={isOver ? 'rgba(79,70,229,0.18)' : fill}
+        stroke={isSelected ? '#4f46e5' : isOver ? '#4f46e5' : stroke}
+        strokeWidth={isSelected ? 3 : isOver ? 2 : 2}
+        onClick={(e) => {
+          e.stopPropagation();
+          selectModule(mod.id as ModuleId);
+        }}
       />
 
-      {/* Module-type specific decorations */}
+      {/* Decorations */}
       {mod.type === 'single-hang' && (
         <>
-          {/* Rod */}
-          <line
-            x1={x + 10}
-            y1={y + 30}
-            x2={x + w - 10}
-            y2={y + 30}
-            stroke={stroke}
-            strokeWidth={2}
-            strokeLinecap="round"
-          />
-          {/* Shelf above */}
-          <line
-            x1={x + 4}
-            y1={y + 15}
-            x2={x + w - 4}
-            y2={y + 15}
-            stroke={stroke}
-            strokeWidth={1}
-          />
+          <line x1={x + 14} y1={y + 32} x2={x + w - 14} y2={y + 32} stroke={stroke} strokeWidth={3} strokeLinecap="round" />
+          <line x1={x + 6}  y1={y + 16} x2={x + w - 6}  y2={y + 16} stroke={stroke} strokeWidth={2} />
         </>
       )}
-
       {mod.type === 'double-hang' && (
         <>
-          {/* Upper rod */}
-          <line
-            x1={x + 10}
-            y1={y + 30}
-            x2={x + w - 10}
-            y2={y + 30}
-            stroke={stroke}
-            strokeWidth={2}
-            strokeLinecap="round"
-          />
-          {/* Lower rod */}
-          <line
-            x1={x + 10}
-            y1={y + h / 2 + 15}
-            x2={x + w - 10}
-            y2={y + h / 2 + 15}
-            stroke={stroke}
-            strokeWidth={2}
-            strokeLinecap="round"
-          />
+          <line x1={x + 14} y1={y + 32}         x2={x + w - 14} y2={y + 32}         stroke={stroke} strokeWidth={3} strokeLinecap="round" />
+          <line x1={x + 14} y1={y + h / 2 + 16} x2={x + w - 14} y2={y + h / 2 + 16} stroke={stroke} strokeWidth={3} strokeLinecap="round" />
         </>
       )}
-
       {mod.type === 'drawer-stack' && (
         <>
-          {/* Drawer lines */}
           {[1, 2].map((i) => (
-            <line
-              key={i}
-              x1={x + 6}
-              y1={y + (h * i) / 3}
-              x2={x + w - 6}
-              y2={y + (h * i) / 3}
-              stroke={stroke}
-              strokeWidth={1}
-            />
+            <line key={i} x1={x + 6} y1={y + (h * i) / 3} x2={x + w - 6} y2={y + (h * i) / 3} stroke={stroke} strokeWidth={2} />
           ))}
-          {/* Drawer pulls */}
           {[0, 1, 2].map((i) => (
-            <line
-              key={`pull-${i}`}
-              x1={x + w / 2 - 15}
-              y1={y + (h * i) / 3 + h / 6}
-              x2={x + w / 2 + 15}
-              y2={y + (h * i) / 3 + h / 6}
-              stroke={stroke}
-              strokeWidth={2}
-              strokeLinecap="round"
-            />
+            <line key={`pull-${i}`} x1={x + w / 2 - 16} y1={y + (h * i) / 3 + h / 6} x2={x + w / 2 + 16} y2={y + (h * i) / 3 + h / 6} stroke={stroke} strokeWidth={3} strokeLinecap="round" />
           ))}
         </>
       )}
-
       {mod.type === 'shelf-tower' && (
-        <>
-          {[1, 2, 3, 4].map((i) => (
-            <line
-              key={i}
-              x1={x + 4}
-              y1={y + (h * i) / 5}
-              x2={x + w - 4}
-              y2={y + (h * i) / 5}
-              stroke={stroke}
-              strokeWidth={1}
-            />
-          ))}
-        </>
+        [1, 2, 3, 4].map((i) => (
+          <line key={i} x1={x + 6} y1={y + (h * i) / 5} x2={x + w - 6} y2={y + (h * i) / 5} stroke={stroke} strokeWidth={2} />
+        ))
       )}
-
       {mod.type === 'shoe-section' && (
-        <>
-          {[1, 2, 3].map((i) => (
-            <line
-              key={i}
-              x1={x + 6}
-              y1={y + (h * i) / 4 + 10}
-              x2={x + w - 6}
-              y2={y + (h * i) / 4 - 5}
-              stroke={stroke}
-              strokeWidth={1}
-            />
-          ))}
-        </>
+        [1, 2, 3].map((i) => (
+          <line key={i} x1={x + 8} y1={y + (h * i) / 4 + 12} x2={x + w - 8} y2={y + (h * i) / 4 - 6} stroke={stroke} strokeWidth={2} />
+        ))
       )}
 
-      {/* Module label */}
+      {/* Label */}
       <text
         x={x + w / 2}
-        y={y + h - 8}
+        y={y + h - 10}
         textAnchor="middle"
-        fontSize={Math.min(11, w / 8)}
+        fontSize={Math.min(12, w / 7)}
         fill={stroke}
-        fontWeight={500}
+        fontWeight={600}
+        style={{ pointerEvents: 'none', userSelect: 'none' }}
       >
         {mod.type.replace('-', ' ')}
       </text>
+
+      {/* TOP resize handle — invisible hit area, overrides drag listeners */}
+      <rect
+        x={x + 4}
+        y={y + 2}
+        width={w - 8}
+        height={RESIZE_ZONE}
+        fill="transparent"
+        style={{ cursor: 'ns-resize' }}
+        onPointerDown={(e) => handleResizeStart(e, 'top')}
+        onClick={(e) => { e.stopPropagation(); selectModule(mod.id as ModuleId); }}
+      />
+
+      {/* BOTTOM resize handle */}
+      <rect
+        x={x + 4}
+        y={y + h - 2 - RESIZE_ZONE}
+        width={w - 8}
+        height={RESIZE_ZONE}
+        fill="transparent"
+        style={{ cursor: 'ns-resize' }}
+        onPointerDown={(e) => handleResizeStart(e, 'bottom')}
+        onClick={(e) => { e.stopPropagation(); selectModule(mod.id as ModuleId); }}
+      />
+
+      {/* Selected indicator: top-bar highlight */}
+      {isSelected && (
+        <rect
+          x={x + 2}
+          y={y + 2}
+          width={w - 4}
+          height={4}
+          rx={2}
+          fill="#4f46e5"
+          style={{ pointerEvents: 'none' }}
+        />
+      )}
     </g>
   );
 }

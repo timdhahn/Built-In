@@ -3,7 +3,7 @@ import { Mm, mm } from '@/domain/units/types';
 import { Unit } from '@/domain/units/types';
 import { SpaceEnvelope, Bay, Module, BayId, ModuleId, bayId, moduleId, componentId } from '@/domain/model';
 import { distributeEqualBays, addBay as addBayLayout, removeBay as removeBayLayout, resizeBay as resizeBayLayout } from '@/domain/geometry/layout';
-import { findNextSlot } from '@/domain/geometry/placement';
+import { findNextSlot, resizeModuleInBay } from '@/domain/geometry/placement';
 import { ModuleDefinition } from '@/domain/catalog/types';
 
 export interface ProjectSlice {
@@ -11,6 +11,7 @@ export interface ProjectSlice {
   envelope: SpaceEnvelope;
   bays: Bay[];
   displayUnit: Unit;
+  lastPlacedModuleId: ModuleId | null;
 
   setProjectName: (name: string) => void;
   setEnvelope: (envelope: Partial<SpaceEnvelope>) => void;
@@ -22,10 +23,12 @@ export interface ProjectSlice {
 
   placeModule: (bayId: BayId, definition: ModuleDefinition) => void;
   moveModule: (moduleId: ModuleId, toBayId: BayId, y: Mm) => void;
+  moveModuleToIndex: (moduleId: ModuleId, fromBayId: BayId, toBayId: BayId, newIndex: number) => void;
+  reorderModules: (bayId: BayId, moduleId: ModuleId, newIndex: number) => void;
   removeModule: (moduleId: ModuleId) => void;
   updateModuleDimensions: (
     moduleId: ModuleId,
-    patch: Partial<Pick<Module, 'width' | 'height' | 'depth'>>,
+    patch: Partial<Pick<Module, 'width' | 'height' | 'depth' | 'y'>>,
   ) => void;
 }
 
@@ -39,6 +42,7 @@ const DEFAULT_ENVELOPE: SpaceEnvelope = {
 export const createProjectSlice: StateCreator<ProjectSlice, [['zustand/immer', never]], [], ProjectSlice> = (set) => ({
   projectName: 'Untitled Project',
   envelope: DEFAULT_ENVELOPE,
+  lastPlacedModuleId: null,
   bays: (() => {
     const widths = distributeEqualBays(DEFAULT_ENVELOPE.width, 3);
     return widths.map((w) => ({
@@ -122,7 +126,8 @@ export const createProjectSlice: StateCreator<ProjectSlice, [['zustand/immer', n
       });
     }),
 
-  placeModule: (targetBayId, definition) =>
+  placeModule: (targetBayId, definition) => {
+    const newId = moduleId();
     set((state) => {
       const bay = state.bays.find((b) => b.id === targetBayId);
       if (!bay) return;
@@ -140,7 +145,7 @@ export const createProjectSlice: StateCreator<ProjectSlice, [['zustand/immer', n
       if (y === null) return;
 
       const newModule: Module = {
-        id: moduleId(),
+        id: newId,
         type: definition.type,
         catalogId: definition.id,
         x: mm(0),
@@ -161,7 +166,9 @@ export const createProjectSlice: StateCreator<ProjectSlice, [['zustand/immer', n
       };
 
       bay.modules.push(newModule);
-    }),
+      state.lastPlacedModuleId = newId;
+    });
+  },
 
   moveModule: (modId, toBayId, y) =>
     set((state) => {
@@ -181,6 +188,45 @@ export const createProjectSlice: StateCreator<ProjectSlice, [['zustand/immer', n
       targetBay.modules.push(found);
     }),
 
+  reorderModules: (targetBayId, modId, newIndex) =>
+    set((state) => {
+      const bay = state.bays.find((b) => b.id === targetBayId);
+      if (!bay) return;
+      const sorted = [...bay.modules].sort((a, b) => (a.y as number) - (b.y as number));
+      const fromIndex = sorted.findIndex((m) => m.id === modId);
+      if (fromIndex === -1) return;
+      const [moved] = sorted.splice(fromIndex, 1);
+      sorted.splice(newIndex, 0, moved);
+      let y = 0;
+      for (const mod of sorted) {
+        mod.y = mm(y);
+        y += mod.height as number;
+      }
+      bay.modules = sorted;
+    }),
+
+  moveModuleToIndex: (modId, fromBayId, toBayId, newIndex) =>
+    set((state) => {
+      const fromBay = state.bays.find((b) => b.id === fromBayId);
+      const toBay = state.bays.find((b) => b.id === toBayId);
+      if (!fromBay || !toBay) return;
+      const fromIdx = fromBay.modules.findIndex((m) => m.id === modId);
+      if (fromIdx === -1) return;
+      const [moved] = fromBay.modules.splice(fromIdx, 1);
+      moved.width = toBay.width;
+      // Re-sort source bay
+      const srcSorted = [...fromBay.modules].sort((a, b) => (a.y as number) - (b.y as number));
+      let y = 0;
+      for (const mod of srcSorted) { mod.y = mm(y); y += mod.height as number; }
+      fromBay.modules = srcSorted;
+      // Insert into dest bay
+      const destSorted = [...toBay.modules].sort((a, b) => (a.y as number) - (b.y as number));
+      destSorted.splice(Math.min(newIndex, destSorted.length), 0, moved);
+      y = 0;
+      for (const mod of destSorted) { mod.y = mm(y); y += mod.height as number; }
+      toBay.modules = destSorted;
+    }),
+
   removeModule: (modId) =>
     set((state) => {
       for (const bay of state.bays) {
@@ -195,9 +241,14 @@ export const createProjectSlice: StateCreator<ProjectSlice, [['zustand/immer', n
   updateModuleDimensions: (modId, patch) =>
     set((state) => {
       for (const bay of state.bays) {
-        const mod = bay.modules.find((m) => m.id === modId);
-        if (mod) {
-          Object.assign(mod, patch);
+        const modExists = bay.modules.some((m) => m.id === modId);
+        if (modExists) {
+          bay.modules = resizeModuleInBay(
+            bay.modules,
+            modId,
+            patch,
+            state.envelope.height,
+          );
           return;
         }
       }

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="oakBase" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#d7b98e" />
+      <stop offset="100%" stop-color="#c59f6c" />
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#oakBase)" />
+  <path d="M0 22C42 28 84 15 126 24S210 28 256 18" stroke="#9f784a" stroke-width="4" fill="none" opacity="0.45" />
+  <path d="M0 78C40 84 86 68 128 76S210 90 256 72" stroke="#a77f4f" stroke-width="4" fill="none" opacity="0.35" />
+  <path d="M0 146C44 152 90 138 132 148S214 154 256 142" stroke="#a27949" stroke-width="4" fill="none" opacity="0.38" />
+  <path d="M0 212C38 224 84 198 130 214S214 220 256 206" stroke="#8d693f" stroke-width="5" fill="none" opacity="0.4" />
+</svg>
